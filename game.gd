@@ -25,6 +25,12 @@ var buttons = {"left":Rect2(25,445,76,76),"right":Rect2(115,445,76,76),"jump":Re
 var special = 0
 var shots = []
 var ai_clock = 0.0
+var game_clock = 0.0
+var player_kick_time = 0.0
+var enemy_hurt_time = 0.0
+var player_hurt_time = 0.0
+var impact_sparks = []
+var camera_shake = 0.0
 
 func _ready():
 	set_process(true)
@@ -44,6 +50,10 @@ func reset_round():
 	enemy_attack_time = 0
 	shots.clear()
 	special = 0
+	player_kick_time = 0.0
+	enemy_hurt_time = 0.0
+	player_hurt_time = 0.0
+	impact_sparks.clear()
 	state = "fight"
 
 func _input(event):
@@ -87,6 +97,7 @@ func down(key):
 	return pressed.get(key,false) or Input.is_key_pressed(keys[key])
 
 func _process(delta):
+	game_clock += delta
 	if state != "fight":
 		queue_redraw()
 		return
@@ -96,6 +107,14 @@ func _process(delta):
 	attack_time = maxf(0,attack_time-delta)
 	enemy_attack_time = maxf(0,enemy_attack_time-delta)
 	hit_flash = maxf(0,hit_flash-delta)
+	player_kick_time = maxf(0,player_kick_time-delta)
+	enemy_hurt_time = maxf(0,enemy_hurt_time-delta)
+	player_hurt_time = maxf(0,player_hurt_time-delta)
+	camera_shake = maxf(0,camera_shake-delta)
+	for spark in impact_sparks:
+		spark["life"] -= delta
+		spark["pos"] += spark["velocity"]*delta
+	impact_sparks = impact_sparks.filter(func(spark): return spark["life"] > 0.0)
 	var dir = float(int(down("right")) - int(down("left")))
 	pv.x = dir * (90 if down("block") else 245)
 	if down("jump") and p.y >= FLOOR:
@@ -121,9 +140,9 @@ func _process(delta):
 		e.x = mid + (35 if p.x<e.x else -35)
 	if cooldown <= 0 and not down("block"):
 		if down("punch"):
-			attack(9,105,0.29)
+			attack(9,105,0.29,false)
 		elif down("kick"):
-			attack(15,135,0.53)
+			attack(15,135,0.53,true)
 		elif down("special") and special >= 40:
 			special -= 40
 			shots.append({"x":p.x,"y":p.y-75,"dir":signf(e.x-p.x)})
@@ -134,10 +153,16 @@ func _process(delta):
 		if not down("block"):
 			hp -= 7 if dist > 90 else 11
 			hit_flash = 0.13
+			player_hurt_time = 0.22
+			camera_shake = 0.15
+			spawn_sparks(p+Vector2(0,-90),Color("#ffbf82"))
 	for shot in shots.duplicate():
 		shot.x += shot.dir*530*delta
 		if absf(shot.x-e.x)<35 and absf(shot.y-(e.y-75))<50:
 			ehp -= 22
+			enemy_hurt_time = 0.25
+			camera_shake = 0.19
+			spawn_sparks(e+Vector2(0,-90),Color("#70eaff"))
 			shots.erase(shot)
 		elif shot.x < -20 or shot.x > 980:
 			shots.erase(shot)
@@ -149,13 +174,23 @@ func _process(delta):
 		state = "match_end" if max(rounds[0],rounds[1]) >= 2 else "round_end"
 	queue_redraw()
 
-func attack(damage, reach, cd):
+func spawn_sparks(where:Vector2,tint:Color):
+	for i in range(9):
+		var angle = TAU*float(i)/9.0
+		impact_sparks.append({"pos":where,"velocity":Vector2(cos(angle),sin(angle))*randf_range(65,190),"life":0.32,"color":tint})
+
+func attack(damage,reach,cd,is_kick=false):
 	cooldown = cd
 	attack_time = cd*0.7
+	if is_kick:
+		player_kick_time = cd*0.7
 	if absf(p.x-e.x)<reach and absf(p.y-e.y)<85:
 		ehp -= damage
 		special = mini(100,special+15)
 		hit_flash = 0.12
+		enemy_hurt_time = 0.22
+		camera_shake = 0.13
+		spawn_sparks(e+Vector2(0,-92),Color("#ffde84"))
 
 func box(rect,color):
 	draw_rect(rect,color)
@@ -165,24 +200,33 @@ func label(txt,pos,size=24,color=Color.WHITE):
 
 func fighter(pos,blue,face,attacking,blocking=false):
 	var art = COURIER_ART if blue else RIVAL_ART
-	var width = 126.0
-	var height = 158.0
-	var origin = Vector2(pos.x-width*0.5,pos.y-height)
 	var facing_right = face
-	if facing_right:
-		draw_texture_rect(art,Rect2(origin,Vector2(width,height)),false)
-	else:
-		draw_set_transform(Vector2(pos.x,pos.y-height),0,Vector2(-1,1))
-		draw_texture_rect(art,Rect2(Vector2(-width*0.5,0),Vector2(width,height)),false)
-		draw_set_transform(Vector2.ZERO)
+	var direction = 1.0 if facing_right else -1.0
+	var moving = absf(pv.x)>12 if blue else absf(ev.x)>12
+	var airborne = pos.y < FLOOR-4
+	var kick = blue and player_kick_time>0
+	var hurt = player_hurt_time>0 if blue else enemy_hurt_time>0
+	var bounce = sin(game_clock*14.0)*3.0 if moving and not airborne else 0.0
+	var lean = -0.15*direction if hurt else 0.12*direction if attacking else 0.0
+	var scale = Vector2(direction*(1.0 if not kick else 1.08),1.0)
+	draw_set_transform(Vector2(pos.x,pos.y+bounce),lean,scale)
+	draw_texture_rect(art,Rect2(-63,-158,126,158),false)
+	draw_set_transform(Vector2.ZERO)
+	if airborne:
+		draw_arc(Vector2(pos.x,pos.y-73),38,0.4,2.7,12,Color("#d8e9f4",0.35),3)
 	if attacking:
-		var direction = 1 if facing_right else -1
-		draw_arc(Vector2(pos.x+direction*60,pos.y-90),24, -1.2,1.2,12,Color("#fff0a4"),5)
+		var strike_pos = pos+Vector2(direction*(73 if kick else 62),-56 if kick else -91)
+		draw_arc(strike_pos,32 if kick else 24,-1.2,1.2,12,Color("#fff0a4"),5)
+		draw_line(strike_pos+Vector2(0,-19),strike_pos+Vector2(direction*20,-29),Color("#ffffff"),3)
 	if blocking:
-		draw_arc(Vector2(pos.x+(35 if facing_right else -35),pos.y-96),43,-1.1,1.1,16,Color("#8be8ff"),4)
+		draw_arc(Vector2(pos.x+direction*35,pos.y-96),43,-1.1,1.1,16,Color("#8be8ff"),4)
+	if hurt:
+		draw_rect(Rect2(pos.x-38,pos.y-153,76,151),Color(1,0.36,0.25,0.15))
 
 func _draw():
 	draw_texture_rect(TERMINAL_ART,Rect2(0,0,960,540),false)
+	if camera_shake>0:
+		draw_set_transform(Vector2(randf_range(-3,3),randf_range(-3,3)))
 	for i in range(0,960,80):
 		draw_line(Vector2(i,410),Vector2(i-80,540),Color("#52515b"),2)
 	draw_rect(Rect2(0,0,960,103),Color("#0b1027"))
@@ -198,6 +242,10 @@ func _draw():
 	box(Rect2(30,65,special*2,12),Color("#4ccfe0"))
 	fighter(p,true,e.x>p.x,attack_time>0,down("block"))
 	fighter(e,false,p.x>e.x,enemy_attack_time>0)
+	draw_set_transform(Vector2.ZERO)
+	for spark in impact_sparks:
+		var point = spark["pos"]
+		draw_circle(point,3.5*spark["life"]/0.32,spark["color"])
 	for shot in shots:
 		draw_rect(Rect2(shot.x-13,shot.y-13,26,26),Color("#e4b26b"))
 		draw_line(Vector2(shot.x-12,shot.y),Vector2(shot.x+12,shot.y),Color("#784c2c"),3)
