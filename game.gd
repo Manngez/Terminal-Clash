@@ -162,19 +162,46 @@ func label(txt,pos,size=24,color=Color.WHITE):
 
 func fighter(pos,blue,face,attacking,blocking=false):
 	var s = 1 if face else -1
-	var c = Color("#237dd2") if blue else Color("#a73350")
-	var trim = Color("#d92e3d") if blue else Color("#f2a738")
-	draw_rect(Rect2(pos.x-21,pos.y-91,42,60),c)
-	draw_rect(Rect2(pos.x-20,pos.y-35,16,35),Color("#25334a"))
-	draw_rect(Rect2(pos.x+4,pos.y-35,16,35),Color("#25334a"))
-	draw_circle(pos+Vector2(0,-109),19,Color("#d3a17b"))
-	draw_rect(Rect2(pos.x-19,pos.y-131,38,13),Color("#155a9a") if blue else Color("#5e2235"))
-	draw_rect(Rect2(pos.x-15,pos.y-100,30,9),Color("#563f35") if blue else Color("#3d2834"))
-	draw_rect(Rect2(pos.x-21,pos.y-72,42,12),trim)
-	draw_rect(Rect2(pos.x+(14*s),pos.y-82,35*s if attacking else 16*s,13),c)
-	draw_rect(Rect2(pos.x-29*s,pos.y-80,13,32),c)
+	var uniform = Color("#176ba6") if blue else Color("#813747")
+	var highlight = Color("#35b4dd") if blue else Color("#d96c5a")
+	var dark = Color("#172339") if blue else Color("#2d2537")
+	var skin = Color("#e7b38b")
+	var outline = Color("#101b2b")
+	# Pixel-art silhouette, boots, knees and trousers.
+	draw_rect(Rect2(pos.x-25,pos.y-43,22,44),outline)
+	draw_rect(Rect2(pos.x+3,pos.y-43,22,44),outline)
+	draw_rect(Rect2(pos.x-21,pos.y-40,15,35),dark)
+	draw_rect(Rect2(pos.x+6,pos.y-40,15,35),dark)
+	draw_rect(Rect2(pos.x-26,pos.y-8,26,9),Color("#0b1626"))
+	draw_rect(Rect2(pos.x+2,pos.y-8,28,9),Color("#0b1626"))
+	draw_rect(Rect2(pos.x-28,pos.y-102,56,67),outline)
+	draw_rect(Rect2(pos.x-24,pos.y-99,48,60),uniform)
+	draw_rect(Rect2(pos.x-21,pos.y-97,7,52),highlight)
+	draw_rect(Rect2(pos.x-24,pos.y-47,48,9),dark)
+	draw_rect(Rect2(pos.x-5,pos.y-85,12,12),Color("#e6f0f0"))
+	draw_rect(Rect2(pos.x-3,pos.y-82,8,3),Color("#3bb6e2") if blue else Color("#f3b66e"))
+	# Head, hair and cap.
+	draw_rect(Rect2(pos.x-20,pos.y-143,40,43),outline)
+	draw_rect(Rect2(pos.x-16,pos.y-139,32,37),skin)
+	draw_rect(Rect2(pos.x-18,pos.y-145,36,14),dark)
+	draw_rect(Rect2(pos.x-25,pos.y-137,47,7),highlight)
+	draw_rect(Rect2(pos.x+(-2 if face else -11),pos.y-119,6,4),outline)
+	draw_rect(Rect2(pos.x-8,pos.y-108,15,3),Color("#935b50"))
+	# Arms and gloves, with readable attack pose.
+	var front_x = pos.x+19*s
+	var reach = 50 if attacking else 18
+	draw_rect(Rect2(pos.x-32,pos.y-96,14,43),outline)
+	draw_rect(Rect2(pos.x-29,pos.y-92,11,34),uniform)
+	draw_rect(Rect2(pos.x-30,pos.y-61,14,13),dark)
+	draw_rect(Rect2(minf(front_x,front_x+reach*s)-4,pos.y-93,absf(reach)+10,19),outline)
+	draw_rect(Rect2(minf(front_x,front_x+reach*s),pos.y-90,absf(reach)+3,12),uniform)
+	draw_rect(Rect2(front_x+reach*s-9,pos.y-96,18,22),dark)
 	if blocking:
-		draw_rect(Rect2(pos.x+24*s,pos.y-110,12,43),Color("#f6cf9b"))
+		draw_rect(Rect2(pos.x+22*s-7,pos.y-122,17,47),outline)
+		draw_rect(Rect2(pos.x+22*s-4,pos.y-118,11,38),highlight)
+	if attacking:
+		draw_line(Vector2(pos.x+64*s,pos.y-94),Vector2(pos.x+79*s,pos.y-105),Color("#ffdf86"),4)
+		draw_line(Vector2(pos.x+64*s,pos.y-84),Vector2(pos.x+84*s,pos.y-79),Color("#fff0b6"),3)
 
 func _draw():
 	draw_rect(Rect2(0,0,960,540),Color("#141a34"))
@@ -193,10 +220,10 @@ func _draw():
 	box(Rect2(30,26,360*maxf(0,hp)/100,23),Color("#e2b944"))
 	box(Rect2(570,26,360,23),Color("#681d31"))
 	box(Rect2(570,26,360*maxf(0,ehp)/100,23),Color("#e2b944"))
-	label("PLAYER 1",30,21,19)
-	label("CPU",868,21,19)
-	label(str(ceili(timer)),459,50,31)
-	label("ROUNDS "+str(rounds[0])+" : "+str(rounds[1]),408,83,18)
+	label("PLAYER 1",Vector2(30,21),19)
+	label("CPU",Vector2(868,21),19)
+	label(str(ceili(timer)),Vector2(459,50),31)
+	label("ROUNDS "+str(rounds[0])+" : "+str(rounds[1]),Vector2(408,83),18)
 	box(Rect2(30,65,200,12),Color("#222c4a"))
 	box(Rect2(30,65,special*2,12),Color("#4ccfe0"))
 	fighter(p,true,e.x>p.x,attack_time>0,down("block"))
@@ -215,10 +242,10 @@ func _draw():
 		draw_rect(Rect2(165,135,630,230),Color(0.02,0.04,0.12,0.92))
 		if state == "title":
 			label("TERMINAL CLASH",Vector2(265,225),46,Color("#f3d06a"))
-			label("TAP TO FIGHT",373,292,27)
+			label("TAP TO FIGHT",Vector2(373,292),27)
 		elif state == "round_end":
 			label("ROUND OVER",Vector2(334,225),38,Color("#f3d06a"))
-			label("TAP FOR NEXT ROUND",318,292,25)
+			label("TAP FOR NEXT ROUND",Vector2(318,292),25)
 		else:
 			label("MATCH OVER",Vector2(328,225),38,Color("#f3d06a"))
-			label("TAP TO PLAY AGAIN",326,292,25)
+			label("TAP TO PLAY AGAIN",Vector2(326,292),25)
