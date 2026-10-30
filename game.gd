@@ -5,6 +5,16 @@ const FLOOR = 426.0
 const TERMINAL_ART = preload("res://assets/terminal.svg")
 const COURIER_ART = preload("res://assets/courier.svg")
 const RIVAL_ART = preload("res://assets/rival.svg")
+const COURIER_RUN1 = preload("res://assets/courier_run1.svg")
+const RIVAL_RUN1 = preload("res://assets/rival_run1.svg")
+const COURIER_RUN2 = preload("res://assets/courier_run2.svg")
+const RIVAL_RUN2 = preload("res://assets/rival_run2.svg")
+const COURIER_PUNCH = preload("res://assets/courier_punch.svg")
+const RIVAL_PUNCH = preload("res://assets/rival_punch.svg")
+const COURIER_KICK = preload("res://assets/courier_kick.svg")
+const RIVAL_KICK = preload("res://assets/rival_kick.svg")
+const COURIER_HURT = preload("res://assets/courier_hurt.svg")
+const RIVAL_HURT = preload("res://assets/rival_hurt.svg")
 var p = Vector2(255, FLOOR)
 var e = Vector2(705, FLOOR)
 var pv = Vector2.ZERO
@@ -200,6 +210,27 @@ func label(txt,pos,size=24,color=Color.WHITE):
 
 func fighter(pos,blue,face,attacking,blocking=false):
 	var art = COURIER_ART if blue else RIVAL_ART
+	var move_frame = int(game_clock*9.0)%2
+	if blue:
+		if player_hurt_time>0:
+			art = COURIER_HURT
+		elif player_kick_time>0:
+			art = COURIER_KICK
+		elif attacking:
+			art = COURIER_PUNCH
+		elif pos.y < FLOOR-4:
+			art = COURIER_RUN2
+		elif absf(pv.x)>12:
+			art = COURIER_RUN1 if move_frame==0 else COURIER_RUN2
+	else:
+		if enemy_hurt_time>0:
+			art = RIVAL_HURT
+		elif attacking:
+			art = RIVAL_PUNCH
+		elif pos.y < FLOOR-4:
+			art = RIVAL_RUN2
+		elif absf(ev.x)>12:
+			art = RIVAL_RUN1 if move_frame==0 else RIVAL_RUN2
 	var facing_right = face
 	var direction = 1.0 if facing_right else -1.0
 	var moving = absf(pv.x)>12 if blue else absf(ev.x)>12
