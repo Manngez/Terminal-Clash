@@ -40,6 +40,7 @@ jobs:
           mkdir -p build
           ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
           ./Godot_v4.3-stable_linux.x86_64 --headless --path . --export-debug Android build/TerminalClash.apk
+          test -s build/TerminalClash.apk
       - uses: actions/upload-artifact@v4
         with:
           name: TerminalClash-Android-APK
