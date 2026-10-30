@@ -214,11 +214,11 @@ func _draw():
 	if state != "fight":
 		draw_rect(Rect2(165,135,630,230),Color(0.02,0.04,0.12,0.92))
 		if state == "title":
-			label("TERMINAL CLASH",265,225,46,Color("#f3d06a"))
+			label("TERMINAL CLASH",Vector2(265,225),46,Color("#f3d06a"))
 			label("TAP TO FIGHT",373,292,27)
 		elif state == "round_end":
-			label("ROUND OVER",334,225,38,Color("#f3d06a"))
+			label("ROUND OVER",Vector2(334,225),38,Color("#f3d06a"))
 			label("TAP FOR NEXT ROUND",318,292,25)
 		else:
-			label("MATCH OVER",328,225,38,Color("#f3d06a"))
+			label("MATCH OVER",Vector2(328,225),38,Color("#f3d06a"))
 			label("TAP TO PLAY AGAIN",326,292,25)
