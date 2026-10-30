@@ -15,6 +15,8 @@ jobs:
       - name: Install Android SDK
         run: |
           SDKROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$SDKROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDKROOT" >> "$GITHUB_ENV"
           SDKMANAGER="$(find "$SDKROOT/cmdline-tools" -type f -name sdkmanager | head -1)"
           test -x "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
@@ -31,6 +33,7 @@ jobs:
       - name: Configure Godot
         run: |
           mkdir -p ~/.config/godot
+          test -d "$ANDROID_HOME/platforms/android-35"
           printf '[gd_resource type="EditorSettings" format=3]\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/java_sdk_path = "%s"\n' "$ANDROID_HOME" "$JAVA_HOME" > ~/.config/godot/editor_settings-4.tres
       - name: Export debug APK
         run: |
