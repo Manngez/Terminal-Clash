@@ -2,6 +2,9 @@ extends Node2D
 
 const W = 960.0
 const FLOOR = 426.0
+const TERMINAL_ART = preload("res://assets/terminal.svg")
+const COURIER_ART = preload("res://assets/courier.svg")
+const RIVAL_ART = preload("res://assets/rival.svg")
 var p = Vector2(255, FLOOR)
 var e = Vector2(705, FLOOR)
 var pv = Vector2.ZERO
@@ -161,58 +164,25 @@ func label(txt,pos,size=24,color=Color.WHITE):
 	draw_string(ThemeDB.fallback_font,pos,txt,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
 
 func fighter(pos,blue,face,attacking,blocking=false):
-	var s = 1 if face else -1
-	var uniform = Color("#176ba6") if blue else Color("#813747")
-	var highlight = Color("#35b4dd") if blue else Color("#d96c5a")
-	var dark = Color("#172339") if blue else Color("#2d2537")
-	var skin = Color("#e7b38b")
-	var outline = Color("#101b2b")
-	# Pixel-art silhouette, boots, knees and trousers.
-	draw_rect(Rect2(pos.x-25,pos.y-43,22,44),outline)
-	draw_rect(Rect2(pos.x+3,pos.y-43,22,44),outline)
-	draw_rect(Rect2(pos.x-21,pos.y-40,15,35),dark)
-	draw_rect(Rect2(pos.x+6,pos.y-40,15,35),dark)
-	draw_rect(Rect2(pos.x-26,pos.y-8,26,9),Color("#0b1626"))
-	draw_rect(Rect2(pos.x+2,pos.y-8,28,9),Color("#0b1626"))
-	draw_rect(Rect2(pos.x-28,pos.y-102,56,67),outline)
-	draw_rect(Rect2(pos.x-24,pos.y-99,48,60),uniform)
-	draw_rect(Rect2(pos.x-21,pos.y-97,7,52),highlight)
-	draw_rect(Rect2(pos.x-24,pos.y-47,48,9),dark)
-	draw_rect(Rect2(pos.x-5,pos.y-85,12,12),Color("#e6f0f0"))
-	draw_rect(Rect2(pos.x-3,pos.y-82,8,3),Color("#3bb6e2") if blue else Color("#f3b66e"))
-	# Head, hair and cap.
-	draw_rect(Rect2(pos.x-20,pos.y-143,40,43),outline)
-	draw_rect(Rect2(pos.x-16,pos.y-139,32,37),skin)
-	draw_rect(Rect2(pos.x-18,pos.y-145,36,14),dark)
-	draw_rect(Rect2(pos.x-25,pos.y-137,47,7),highlight)
-	draw_rect(Rect2(pos.x+(-2 if face else -11),pos.y-119,6,4),outline)
-	draw_rect(Rect2(pos.x-8,pos.y-108,15,3),Color("#935b50"))
-	# Arms and gloves, with readable attack pose.
-	var front_x = pos.x+19*s
-	var reach = 50 if attacking else 18
-	draw_rect(Rect2(pos.x-32,pos.y-96,14,43),outline)
-	draw_rect(Rect2(pos.x-29,pos.y-92,11,34),uniform)
-	draw_rect(Rect2(pos.x-30,pos.y-61,14,13),dark)
-	draw_rect(Rect2(minf(front_x,front_x+reach*s)-4,pos.y-93,absf(reach)+10,19),outline)
-	draw_rect(Rect2(minf(front_x,front_x+reach*s),pos.y-90,absf(reach)+3,12),uniform)
-	draw_rect(Rect2(front_x+reach*s-9,pos.y-96,18,22),dark)
-	if blocking:
-		draw_rect(Rect2(pos.x+22*s-7,pos.y-122,17,47),outline)
-		draw_rect(Rect2(pos.x+22*s-4,pos.y-118,11,38),highlight)
+	var art = COURIER_ART if blue else RIVAL_ART
+	var width = 126.0
+	var height = 158.0
+	var origin = Vector2(pos.x-width*0.5,pos.y-height)
+	var facing_right = face
+	if facing_right:
+		draw_texture_rect(art,Rect2(origin,Vector2(width,height)),false)
+	else:
+		draw_set_transform(Vector2(pos.x,pos.y-height),0,Vector2(-1,1))
+		draw_texture_rect(art,Rect2(Vector2(-width*0.5,0),Vector2(width,height)),false)
+		draw_set_transform(Vector2.ZERO)
 	if attacking:
-		draw_line(Vector2(pos.x+64*s,pos.y-94),Vector2(pos.x+79*s,pos.y-105),Color("#ffdf86"),4)
-		draw_line(Vector2(pos.x+64*s,pos.y-84),Vector2(pos.x+84*s,pos.y-79),Color("#fff0b6"),3)
+		var direction = 1 if facing_right else -1
+		draw_arc(Vector2(pos.x+direction*60,pos.y-90),24, -1.2,1.2,12,Color("#fff0a4"),5)
+	if blocking:
+		draw_arc(Vector2(pos.x+(35 if facing_right else -35),pos.y-96),43,-1.1,1.1,16,Color("#8be8ff"),4)
 
 func _draw():
-	draw_rect(Rect2(0,0,960,540),Color("#141a34"))
-	draw_rect(Rect2(0,115,960,290),Color("#263858"))
-	for i in range(12):
-		draw_rect(Rect2(i*95,150+(i%3)*12,67,155),Color("#304969"))
-		draw_rect(Rect2(i*95+8,170,45,48),Color("#a56c56"))
-	for i in range(8):
-		draw_rect(Rect2(i*130,320,95,83),Color("#a17c55"))
-		draw_rect(Rect2(i*130+4,324,87,75),Color("#826345"))
-	draw_rect(Rect2(0,400,960,140),Color("#353847"))
+	draw_texture_rect(TERMINAL_ART,Rect2(0,0,960,540),false)
 	for i in range(0,960,80):
 		draw_line(Vector2(i,410),Vector2(i-80,540),Color("#52515b"),2)
 	draw_rect(Rect2(0,0,960,103),Color("#0b1027"))
