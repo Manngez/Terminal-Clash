@@ -40,6 +40,11 @@ jobs:
       - name: Export debug APK
         run: |
           mkdir -p build
+          echo "Godot editor settings:"
+          cat ~/.config/godot/editor_settings-4.tres
+          echo "Android SDK and templates:"
+          ls -l "$ANDROID_HOME/build-tools/35.0.0" | head
+          ls -l ~/.local/share/godot/export_templates/4.3.stable/android* | head
           ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
           ./Godot_v4.3-stable_linux.x86_64 --headless --verbose --path . --export-debug Android build/TerminalClash.apk
           test -s build/TerminalClash.apk
