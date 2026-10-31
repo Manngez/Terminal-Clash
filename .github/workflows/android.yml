@@ -24,6 +24,11 @@ jobs:
             cp "$ROOT/main.tscn" main.tscn
             cp -a "$ROOT/assets/." assets/
             python3 scripts/upgrade_touch_controls.py game.gd
+            python3 -m pip install --quiet pillow
+            python3 scripts/create_crouch_frames.py
+            python3 scripts/add_crouch_menu.py game.gd
+            test -s assets/courier_crouch.png
+            test -s assets/customer_crouch.png
             # Keep known-good Android export preset and rendering options.
             sed -i 's/window\/handheld\/orientation=1/window\/handheld\/orientation=0/' project.godot
             echo "TERMINAL DELUXE ASSETS INSTALLED."
