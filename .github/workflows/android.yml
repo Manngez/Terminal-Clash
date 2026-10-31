@@ -28,6 +28,21 @@ jobs:
             cp "$ROOT/snowyard_smoke_test.gd" scripts/snowyard_smoke_test.gd
             python3 scripts/fix_cowboy_snowballs.py game.gd
             cp scripts/snowyard_v2_smoke_test.gd scripts/snowyard_smoke_test.gd
+            if [ -f cowboy_v3.zip ]; then
+              echo "Installing 77 uniquely drawn Cowboy V3 frames."
+              mkdir -p /tmp/cowboy-v3
+              unzip -q -o cowboy_v3.zip -d /tmp/cowboy-v3
+              V3=/tmp/cowboy-v3/Paketkriget_Cowboy_V3
+              test -s "$V3/assets/cowboy_v3_manifest.json"
+              test -s "$V3/use_cowboy_v3.py"
+              test -s "$V3/cowboy_v3_smoke_test.gd"
+              cp -a "$V3/assets/." assets/
+              cp "$V3/use_cowboy_v3.py" scripts/use_cowboy_v3.py
+              cp "$V3/cowboy_v3_smoke_test.gd" scripts/cowboy_v3_smoke_test.gd
+              python3 -m pip install --quiet pillow
+              python3 scripts/use_cowboy_v3.py game.gd
+              echo "COWBOY V3: multi-frame animations installed"
+            fi
             # Preserve the working Android export preset and GL compatibility settings.
             sed -i 's/window\/handheld\/orientation=1/window\/handheld\/orientation=0/' project.godot
             sed -i 's/config\/name="Terminal Clash"/config\/name="Paketkriget - Snoduellen"/' project.godot
@@ -109,6 +124,9 @@ jobs:
           ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
           if [ -f scripts/snowyard_smoke_test.gd ]; then
             ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/snowyard_smoke_test.gd
+            if [ -f scripts/cowboy_v3_smoke_test.gd ]; then
+              ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/cowboy_v3_smoke_test.gd
+            fi
           else
             ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/smoke_test.gd
           fi
