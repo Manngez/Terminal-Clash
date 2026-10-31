@@ -45,6 +45,20 @@ jobs:
               python3 scripts/smooth_cowboy_v4.py game.gd
               echo "COWBOY V4: 70 clean, stabilized frames; smoother and slower animation"
             fi
+            if [ -f terminalkaos.zip ]; then
+              echo "TERMINALKAOS: Installing third playable stage and worker animation sprites"
+              mkdir -p /tmp/terminalkaos
+              unzip -q -o terminalkaos.zip -d /tmp/terminalkaos
+              KAO=/tmp/terminalkaos/Paketkriget_Terminalkaos
+              test -s "$KAO/install_terminalkaos.py"
+              test -s "$KAO/terminalkaos_smoke_test.gd"
+              test -s "$KAO/assets/terminalkaos_stage.png"
+              test -s "$KAO/assets/worker_throw.png"
+              cp -a "$KAO/assets/." assets/
+              python3 "$KAO/install_terminalkaos.py" game.gd
+              cp "$KAO/terminalkaos_smoke_test.gd" scripts/terminalkaos_smoke_test.gd
+              echo "TERMINALKAOS V1: Third stage installed"
+            fi
             # Preserve the working Android export preset and GL compatibility settings.
             sed -i 's/window\/handheld\/orientation=1/window\/handheld\/orientation=0/' project.godot
             sed -i 's/config\/name="Terminal Clash"/config\/name="Paketkriget - Snoduellen"/' project.godot
@@ -129,6 +143,9 @@ jobs:
             if [ -f scripts/cowboy_v3_smoke_test.gd ]; then
               ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/cowboy_v3_smoke_test.gd
               ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/cowboy_v4_smoke_test.gd
+              if [ -f scripts/terminalkaos_smoke_test.gd ]; then
+                ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/terminalkaos_smoke_test.gd
+              fi
             fi
           else
             ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/smoke_test.gd
