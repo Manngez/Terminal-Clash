@@ -10,9 +10,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Apply approved Terminal Deluxe pixel art archive
         run: |
-          if [ -f Paketkriget_Terminal_Deluxe.zip ]; then
+          if [ -f paketkriget.zip ] || [ -f Paketkriget_Terminal_Deluxe.zip ]; then
+            ARCHIVE=paketkriget.zip
+            if [ ! -f "$ARCHIVE" ]; then ARCHIVE=Paketkriget_Terminal_Deluxe.zip; fi
             mkdir -p /tmp/terminal-deluxe
-            unzip -q -o Paketkriget_Terminal_Deluxe.zip -d /tmp/terminal-deluxe
+            unzip -q -o "$ARCHIVE" -d /tmp/terminal-deluxe
             ROOT=/tmp/terminal-deluxe/Paketkriget_Terminal_Deluxe
             test -s "$ROOT/game.gd"
             test -s "$ROOT/assets/terminal.png"
