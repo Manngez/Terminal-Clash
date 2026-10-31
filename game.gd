@@ -74,6 +74,12 @@ var enemy_windup = 0.0
 var player_hurt_time = 0.0
 var impact_sparks = []
 var camera_shake = 0.0
+var hit_pause = 0.0
+var player_stun = 0.0
+var enemy_stun = 0.0
+var round_message = ""
+var fight_banner = 0.0
+var particles = []
 
 func _ready():
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -103,6 +109,11 @@ func reset_round():
 	enemy_windup = 0.0
 	player_hurt_time = 0.0
 	impact_sparks.clear()
+	particles.clear()
+	hit_pause = 0.0
+	player_stun = 0.0
+	enemy_stun = 0.0
+	fight_banner = 1.15
 	state = "fight"
 
 func _input(event):
@@ -150,6 +161,13 @@ func _process(delta):
 	if state != "fight":
 		queue_redraw()
 		return
+	fight_banner = maxf(0.0,fight_banner-delta)
+	if hit_pause > 0.0:
+		hit_pause = maxf(0.0,hit_pause-delta)
+		queue_redraw()
+		return
+	player_stun = maxf(0.0,player_stun-delta)
+	enemy_stun = maxf(0.0,enemy_stun-delta)
 	timer -= delta
 	cooldown = maxf(0,cooldown-delta)
 	enemy_cooldown = maxf(0,enemy_cooldown-delta)
@@ -170,8 +188,8 @@ func _process(delta):
 		spark["pos"] += spark["velocity"]*delta
 	impact_sparks = impact_sparks.filter(func(spark): return spark["life"] > 0.0)
 	var dir = float(int(down("right")) - int(down("left")))
-	pv.x = dir * (90 if down("block") else 245)
-	if down("jump") and p.y >= FLOOR:
+	pv.x = 0.0 if player_stun>0.0 else dir * (90 if down("block") else 245)
+	if down("jump") and p.y >= FLOOR and player_stun<=0.0:
 		pv.y = -490
 	pv.y += 1200*delta
 	p += pv*delta
@@ -180,7 +198,7 @@ func _process(delta):
 	ai_clock += delta
 	var dist = absf(p.x-e.x)
 	var ed = signf(p.x-e.x)
-	ev.x = ed * (115 if dist > 125 else -45 if dist < 67 else 0)
+	ev.x = 0.0 if enemy_stun>0.0 else ed * (115 if dist > 125 else -45 if dist < 67 else 0)
 	if ai_clock > 1.9 and dist > 190 and e.y >= FLOOR:
 		ev.y = -420
 		ai_clock = 0
@@ -201,12 +219,15 @@ func _process(delta):
 			special -= 40
 			shots.append({"x":p.x,"y":p.y-75,"dir":signf(e.x-p.x)})
 			cooldown = 0.65
-	if enemy_cooldown <= 0 and dist < 125 and absf(p.y-e.y)<95:
+	if enemy_cooldown <= 0 and enemy_stun<=0.0 and dist < 125 and absf(p.y-e.y)<95:
 		enemy_cooldown = randf_range(0.65,1.25)
 		enemy_attack_time = 0.28
 		enemy_kick_time = 0.28 if dist > 85 else 0.0
 		if not down("block"):
 			hp -= 7 if dist > 90 else 11
+			player_stun = 0.18
+			p.x = clampf(p.x + signf(p.x-e.x)*20.0,35.0,925.0)
+			hit_pause = 0.045
 			hit_flash = 0.13
 			player_hurt_time = 0.22
 			camera_shake = 0.15
@@ -216,6 +237,9 @@ func _process(delta):
 		if absf(shot.x-e.x)<35 and absf(shot.y-(e.y-75))<50:
 			ehp -= 22
 			enemy_hurt_time = 0.25
+			enemy_stun = 0.26
+			e.x = clampf(e.x+signf(e.x-p.x)*35.0,35.0,925.0)
+			hit_pause = 0.08
 			camera_shake = 0.19
 			spawn_sparks(e+Vector2(0,-90),Color("#70eaff"))
 			shots.erase(shot)
@@ -223,9 +247,13 @@ func _process(delta):
 			shots.erase(shot)
 	if hp <= 0 or ehp <= 0 or timer <= 0:
 		if hp > ehp:
+			round_message = "POSTNORD VINNER!"
 			rounds[0] += 1
 		elif ehp > hp:
+			round_message = "KUNDEN VINNER!"
 			rounds[1] += 1
+		else:
+			round_message = "OAVGJORT!"
 		state = "match_end" if max(rounds[0],rounds[1]) >= 2 else "round_end"
 	queue_redraw()
 
@@ -247,6 +275,9 @@ func attack(damage,reach,cd,is_kick=false):
 		special = mini(100,special+15)
 		hit_flash = 0.12
 		enemy_hurt_time = 0.22
+		enemy_stun = 0.2 if not is_kick else 0.32
+		e.x = clampf(e.x+signf(e.x-p.x)*(17.0 if not is_kick else 37.0),35.0,925.0)
+		hit_pause = 0.055 if not is_kick else 0.09
 		camera_shake = 0.13
 		spawn_sparks(e+Vector2(0,-92),Color("#ffde84"))
 
@@ -306,12 +337,22 @@ func fighter(pos,blue,face,attacking,blocking=false):
 	if blocking:
 		draw_arc(Vector2(pos.x+direction*38,pos.y-105),42,-1.1,1.1,16,Color("#8be8ff"),4)
 
+func draw_ellipse_shadow(pos:Vector2):
+	var shadow_width = 47.0 if pos.y>=FLOOR-3.0 else 35.0
+	var shadow_alpha = 0.35 if pos.y>=FLOOR-3.0 else 0.18
+	for i in range(4):
+		draw_arc(Vector2(pos.x,FLOOR+2.0),shadow_width-float(i)*3.0,0.0,PI,24,Color(0.02,0.03,0.06,shadow_alpha),3.0)
+
 func _draw():
 	draw_texture_rect(TERMINAL_ART,Rect2(0,0,960,540),false)
 	if camera_shake>0:
 		draw_set_transform(Vector2(randf_range(-3,3),randf_range(-3,3)))
 	draw_rect(Rect2(0,397,960,4),Color("#eddbb4",0.32))
+	# Shadows anchor the fighters to the street.
+	draw_ellipse_shadow(p)
+	draw_ellipse_shadow(e)
 	draw_rect(Rect2(0,0,960,103),Color("#0b1027"))
+	draw_rect(Rect2(0,101,960,4),Color("#f2c66c"))
 	box(Rect2(30,26,360,23),Color("#681d31"))
 	box(Rect2(30,26,360*maxf(0,hp)/100,23),Color("#e2b944"))
 	box(Rect2(570,26,360,23),Color("#681d31"))
@@ -319,7 +360,9 @@ func _draw():
 	label("POSTNORD",Vector2(30,21),19)
 	label("KUNDEN",Vector2(836,21),19)
 	label(str(ceili(timer)),Vector2(459,50),31)
-	label("ROUNDS "+str(rounds[0])+" : "+str(rounds[1]),Vector2(408,83),18)
+	label("RONDER "+str(rounds[0])+" : "+str(rounds[1]),Vector2(406,83),18)
+	if fight_banner>0.0 and state=="fight":
+		label("FIGHT!",Vector2(399,206),45,Color("#ffe49c"))
 	if combo_display>0 and combo_hits>=2:
 		label(str(combo_hits)+" HIT COMBO!",Vector2(333,144),28,Color("#ffdd69"))
 	box(Rect2(30,65,200,12),Color("#222c4a"))
@@ -344,10 +387,10 @@ func _draw():
 		draw_rect(Rect2(165,135,630,230),Color(0.02,0.04,0.12,0.92))
 		if state == "title":
 			label("PAKETKRIGET",Vector2(285,225),46,Color("#f3d06a"))
-			label("TAP TO FIGHT",Vector2(373,292),27)
+			label("TRYCK FOR ATT SPELA",Vector2(330,292),26)
 		elif state == "round_end":
-			label("ROUND OVER",Vector2(334,225),38,Color("#f3d06a"))
-			label("TAP FOR NEXT ROUND",Vector2(318,292),25)
+			label(round_message,Vector2(295,225),35,Color("#f3d06a"))
+			label("TRYCK FOR NASTA ROND",Vector2(312,292),25)
 		else:
-			label("MATCH OVER",Vector2(328,225),38,Color("#f3d06a"))
-			label("TAP TO PLAY AGAIN",Vector2(326,292),25)
+			label(round_message,Vector2(295,225),35,Color("#f3d06a"))
+			label("TRYCK FOR ATT SPELA IGEN",Vector2(289,292),25)
