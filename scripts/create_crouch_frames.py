@@ -20,7 +20,10 @@ for actor in ("courier", "customer"):
     # undistorted and lowers toward the knees.
     lower = image.crop((0, 332, 640, 620))
     lower = lower.resize((640, round(lower.height * 0.66)), Image.Resampling.NEAREST)
-    target.alpha_composite(lower, (0, 620 - lower.height))
+    # Anchor the shoe sole at the exact same y=570 as the original idle pose.
+    foot_anchor = 570
+    scaled_sole_offset = round((foot_anchor - 332) * 0.66)
+    target.alpha_composite(lower, (0, foot_anchor - scaled_sole_offset))
     upper = image.crop((0, 0, 640, 400))
     target.alpha_composite(upper, (0, 75))
     assert target.getbbox() is not None
