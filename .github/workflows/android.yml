@@ -8,6 +8,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Apply Ritz Edition graphics and game files
+        run: |
+          if [ -f Paketkriget_Ritz_Godot.zip ]; then
+            mkdir -p /tmp/paketkriget
+            unzip -q -o Paketkriget_Ritz_Godot.zip -d /tmp/paketkriget
+            test -f /tmp/paketkriget/Paketkriget_Godot/game.gd
+            test -f /tmp/paketkriget/Paketkriget_Godot/assets/ritz.png
+            cp -a /tmp/paketkriget/Paketkriget_Godot/. .
+            echo "Ritz Edition installed from project archive."
+          else
+            echo "No Ritz Edition archive found; building existing repository."
+          fi
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
