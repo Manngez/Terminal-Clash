@@ -56,6 +56,7 @@ jobs:
               test -s "$KAO/assets/worker_throw.png"
               cp -a "$KAO/assets/." assets/
               python3 "$KAO/install_terminalkaos.py" game.gd
+              python3 scripts/style_terminalkaos_v2.py assets
               cp "$KAO/terminalkaos_smoke_test.gd" scripts/terminalkaos_smoke_test.gd
               echo "TERMINALKAOS V1: Third stage installed"
             fi
