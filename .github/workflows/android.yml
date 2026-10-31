@@ -83,6 +83,7 @@ jobs:
           ls -l "$ANDROID_HOME/build-tools/35.0.0" | head
           ls -l ~/.local/share/godot/export_templates/4.3.stable/android* | head
           ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/smoke_test.gd
           ./Godot_v4.3-stable_linux.x86_64 --headless --verbose --path . --export-debug Android build/TerminalClash.apk
           test -s build/TerminalClash.apk
           unzip -t build/TerminalClash.apk | tail -2
