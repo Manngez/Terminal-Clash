@@ -2,7 +2,7 @@ extends Node2D
 
 const W = 960.0
 const FLOOR = 426.0
-const TERMINAL_ART = preload("res://assets/ritz_stage.svg")
+const TERMINAL_ART = preload("res://assets/terminal_stage.svg")
 const CUSTOMER_ART = preload("res://assets/customer.svg")
 const CUSTOMER_RUN1 = preload("res://assets/customer_run1.svg")
 const CUSTOMER_RUN2 = preload("res://assets/customer_run2.svg")
@@ -347,7 +347,7 @@ func _draw():
 	draw_texture_rect(TERMINAL_ART,Rect2(0,0,960,540),false)
 	if camera_shake>0:
 		draw_set_transform(Vector2(randf_range(-3,3),randf_range(-3,3)))
-	draw_rect(Rect2(0,397,960,4),Color("#eddbb4",0.32))
+	draw_rect(Rect2(0,397,960,4),Color("#eddbb4",0.12))
 	# Shadows anchor the fighters to the street.
 	draw_ellipse_shadow(p)
 	draw_ellipse_shadow(e)
@@ -380,7 +380,7 @@ func _draw():
 		var rect = buttons[key]
 		draw_rect(rect,Color(0.12,0.21,0.35,0.78) if not down(key) else Color(0.4,0.65,0.82,0.92))
 		draw_rect(rect,Color("#b9d9ed"),false,2)
-		label({"left":"<","right":">","jump":"UP","punch":"SLAG","kick":"SPARK","block":"SKYDD","special":"SUPER"}.get(key,key),rect.position+Vector2(7,42),15)
+		label({"left":"<","right":">","jump":"HOPP","punch":"SLAG","kick":"SPARK","block":"SKYDD","special":"SUPER"}.get(key,key),rect.position+Vector2(7,42),15)
 	if hit_flash>0:
 		draw_rect(Rect2(0,0,960,540),Color(1,1,1,0.13))
 	if state != "fight":
