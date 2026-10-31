@@ -19,7 +19,9 @@ jobs:
             cp /tmp/paketkriget/Paketkriget_Godot/main.tscn main.tscn
             cp -a /tmp/paketkriget/Paketkriget_Godot/assets/. assets/
             # Keep the repository Android export settings and ETC2/ASTC configuration.
-            echo "Ritz Edition installed from project archive."
+            python -m pip install --quiet pillow numpy
+            python ritz_prepare.py
+            echo "Ritz Edition installed with corrected transparent and aligned sprites."
           else
             echo "No Ritz Edition archive found; building existing repository."
           fi
