@@ -26,6 +26,8 @@ jobs:
             cp -a "$ROOT/assets/." assets/
             cp "$ROOT/icon.png" icon.png
             cp "$ROOT/snowyard_smoke_test.gd" scripts/snowyard_smoke_test.gd
+            python3 scripts/fix_cowboy_snowballs.py game.gd
+            cp scripts/snowyard_v2_smoke_test.gd scripts/snowyard_smoke_test.gd
             # Preserve the working Android export preset and GL compatibility settings.
             sed -i 's/window\/handheld\/orientation=1/window\/handheld\/orientation=0/' project.godot
             sed -i 's/config\/name="Terminal Clash"/config\/name="Paketkriget - Snoduellen"/' project.godot
