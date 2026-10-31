@@ -28,15 +28,8 @@ jobs:
             cp "$ROOT/snowyard_smoke_test.gd" scripts/snowyard_smoke_test.gd
             # Preserve the working Android export preset and GL compatibility settings.
             sed -i 's/window\/handheld\/orientation=1/window\/handheld\/orientation=0/' project.godot
-            python3 - <<'PY'
-          from pathlib import Path
-          f=Path("project.godot")
-          cfg=f.read_text()
-          cfg=cfg.replace('config/name="Terminal Clash"','config/name="Paketkriget - Snoduellen"')
-          if 'config/icon=' not in cfg:
-              cfg=cfg.replace('run/main_scene="res://main.tscn"','run/main_scene="res://main.tscn"\nconfig/icon="res://icon.png"')
-          f.write_text(cfg)
-          PY
+            sed -i 's/config\/name="Terminal Clash"/config\/name="Paketkriget - Snoduellen"/' project.godot
+            sed -i '/run\/main_scene=/a config/icon="res:\/\/icon.png"' project.godot
             echo "SNOWYARD SHOWDOWN INSTALLED: 2 stages, snowballs, cowboy sprites."
             ls -lh assets/snow_stage.png assets/cowboy_idle.png assets/cowboy_throw.png
           elif [ -f paketkriget.zip ] || [ -f Paketkriget_Terminal_Deluxe.zip ]; then
