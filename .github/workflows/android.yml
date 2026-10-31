@@ -40,8 +40,10 @@ jobs:
               cp "$V3/use_cowboy_v3.py" scripts/use_cowboy_v3.py
               cp "$V3/cowboy_v3_smoke_test.gd" scripts/cowboy_v3_smoke_test.gd
               python3 -m pip install --quiet pillow
+              python3 scripts/polish_cowboy_art.py
               python3 scripts/use_cowboy_v3.py game.gd
-              echo "COWBOY V3: multi-frame animations installed"
+              python3 scripts/smooth_cowboy_v4.py game.gd
+              echo "COWBOY V4: 70 clean, stabilized frames; smoother and slower animation"
             fi
             # Preserve the working Android export preset and GL compatibility settings.
             sed -i 's/window\/handheld\/orientation=1/window\/handheld\/orientation=0/' project.godot
@@ -126,6 +128,7 @@ jobs:
             ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/snowyard_smoke_test.gd
             if [ -f scripts/cowboy_v3_smoke_test.gd ]; then
               ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/cowboy_v3_smoke_test.gd
+              ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/cowboy_v4_smoke_test.gd
             fi
           else
             ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/smoke_test.gd
