@@ -10,7 +10,36 @@ jobs:
       - uses: actions/checkout@v4
       - name: Apply approved Terminal Deluxe pixel art archive
         run: |
-          if [ -f paketkriget.zip ] || [ -f Paketkriget_Terminal_Deluxe.zip ]; then
+          if [ -f snowyard.zip ]; then
+            echo "Installing Snowyard Showdown (new game + winter stage)"
+            mkdir -p /tmp/snowyard
+            unzip -q -o snowyard.zip -d /tmp/snowyard
+            ROOT=/tmp/snowyard/Paketkriget_Snowyard
+            test -s "$ROOT/game.gd"
+            test -s "$ROOT/assets/snow_stage.png"
+            test -s "$ROOT/assets/terminal.png"
+            test -s "$ROOT/assets/cowboy_idle.png"
+            test -s "$ROOT/assets/cowboy_throw.png"
+            test -s "$ROOT/snowyard_smoke_test.gd"
+            cp "$ROOT/game.gd" game.gd
+            cp "$ROOT/main.tscn" main.tscn
+            cp -a "$ROOT/assets/." assets/
+            cp "$ROOT/icon.png" icon.png
+            cp "$ROOT/snowyard_smoke_test.gd" scripts/snowyard_smoke_test.gd
+            # Preserve the working Android export preset and GL compatibility settings.
+            sed -i 's/window\/handheld\/orientation=1/window\/handheld\/orientation=0/' project.godot
+            python3 - <<'PY'
+          from pathlib import Path
+          f=Path("project.godot")
+          cfg=f.read_text()
+          cfg=cfg.replace('config/name="Terminal Clash"','config/name="Paketkriget - Snoduellen"')
+          if 'config/icon=' not in cfg:
+              cfg=cfg.replace('run/main_scene="res://main.tscn"','run/main_scene="res://main.tscn"\nconfig/icon="res://icon.png"')
+          f.write_text(cfg)
+          PY
+            echo "SNOWYARD SHOWDOWN INSTALLED: 2 stages, snowballs, cowboy sprites."
+            ls -lh assets/snow_stage.png assets/cowboy_idle.png assets/cowboy_throw.png
+          elif [ -f paketkriget.zip ] || [ -f Paketkriget_Terminal_Deluxe.zip ]; then
             ARCHIVE=paketkriget.zip
             if [ ! -f "$ARCHIVE" ]; then ARCHIVE=Paketkriget_Terminal_Deluxe.zip; fi
             mkdir -p /tmp/terminal-deluxe
@@ -83,7 +112,11 @@ jobs:
           ls -l "$ANDROID_HOME/build-tools/35.0.0" | head
           ls -l ~/.local/share/godot/export_templates/4.3.stable/android* | head
           ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
-          ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/smoke_test.gd
+          if [ -f scripts/snowyard_smoke_test.gd ]; then
+            ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/snowyard_smoke_test.gd
+          else
+            ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://scripts/smoke_test.gd
+          fi
           ./Godot_v4.3-stable_linux.x86_64 --headless --verbose --path . --export-debug Android build/TerminalClash.apk
           test -s build/TerminalClash.apk
           unzip -t build/TerminalClash.apk | tail -2
