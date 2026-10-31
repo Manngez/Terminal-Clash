@@ -8,12 +8,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Use native transparent sprite assets and warehouse stage
+      - name: Apply approved Terminal Deluxe pixel art archive
         run: |
-          test -s assets/terminal_stage.svg
-          test -s assets/pixel_courier_idle.svg
-          test -s assets/pixel_customer_idle.svg
-          echo "Building native game assets; no ZIP overlay or destructive sprite cleanup."
+          if [ -f Paketkriget_Terminal_Deluxe.zip ]; then
+            mkdir -p /tmp/terminal-deluxe
+            unzip -q -o Paketkriget_Terminal_Deluxe.zip -d /tmp/terminal-deluxe
+            ROOT=/tmp/terminal-deluxe/Paketkriget_Terminal_Deluxe
+            test -s "$ROOT/game.gd"
+            test -s "$ROOT/assets/terminal.png"
+            test -s "$ROOT/assets/courier_idle.png"
+            test -s "$ROOT/assets/customer_idle.png"
+            cp "$ROOT/game.gd" game.gd
+            cp "$ROOT/main.tscn" main.tscn
+            cp -a "$ROOT/assets/." assets/
+            # Keep known-good Android export preset and rendering options.
+            sed -i 's/window\/handheld\/orientation=1/window\/handheld\/orientation=0/' project.godot
+            echo "TERMINAL DELUXE ASSETS INSTALLED."
+            ls -lh assets/terminal.png assets/courier_idle.png assets/customer_idle.png
+          elif [ -f Paketkriget_Ritz_Godot.zip ]; then
+            echo "Terminal Deluxe archive not uploaded yet; using prior Ritz package."
+            mkdir -p /tmp/paketkriget
+            unzip -q -o Paketkriget_Ritz_Godot.zip -d /tmp/paketkriget
+            cp /tmp/paketkriget/Paketkriget_Godot/game.gd game.gd
+            cp /tmp/paketkriget/Paketkriget_Godot/main.tscn main.tscn
+            cp -a /tmp/paketkriget/Paketkriget_Godot/assets/. assets/
+            python -m pip install --quiet pillow numpy
+            python ritz_prepare.py
+          else
+            echo "No image archive: building repository sources."
+          fi
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
