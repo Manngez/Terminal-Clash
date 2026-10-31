@@ -8,23 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply Ritz Edition graphics and game files
+      - name: Use native transparent sprite assets and warehouse stage
         run: |
-          if [ -f Paketkriget_Ritz_Godot.zip ]; then
-            mkdir -p /tmp/paketkriget
-            unzip -q -o Paketkriget_Ritz_Godot.zip -d /tmp/paketkriget
-            test -f /tmp/paketkriget/Paketkriget_Godot/game.gd
-            test -f /tmp/paketkriget/Paketkriget_Godot/assets/ritz.png
-            cp /tmp/paketkriget/Paketkriget_Godot/game.gd game.gd
-            cp /tmp/paketkriget/Paketkriget_Godot/main.tscn main.tscn
-            cp -a /tmp/paketkriget/Paketkriget_Godot/assets/. assets/
-            # Keep the repository Android export settings and ETC2/ASTC configuration.
-            python -m pip install --quiet pillow numpy
-            python ritz_prepare.py
-            echo "Ritz Edition installed with corrected transparent and aligned sprites."
-          else
-            echo "No Ritz Edition archive found; building existing repository."
-          fi
+          test -s assets/terminal_stage.svg
+          test -s assets/pixel_courier_idle.svg
+          test -s assets/pixel_customer_idle.svg
+          echo "Building native game assets; no ZIP overlay or destructive sprite cleanup."
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
