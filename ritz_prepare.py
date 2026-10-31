@@ -13,44 +13,36 @@ for who in ("courier", "customer"):
         mask = a[:, :, 3] > 0
         if not mask.any():
             raise RuntimeError("Empty sprite: " + str(src))
-        # Source sheet is hard-edged pixel art. Strip stray isolated pixels,
-        # retaining the primary connected character and meaningful nearby details.
+        # Preserve every original opaque pixel in the fighter, including dark
+        # trousers and boots. Never discard disconnected components: kicks,
+        # gloves and separated feet are legitimate parts of a sprite.
+        # Only remove the sheet's dark navy backdrop if it connects to an
+        # image edge. Flood-fill through background-colored pixels, not through
+        # the character's black outlines.
         from collections import deque
-        h, w = mask.shape
-        seen = np.zeros_like(mask)
-        components = []
+        rgb = a[:, :, :3].astype(np.int16)
+        h, w = a.shape[:2]
+        corners = np.array([rgb[0,0], rgb[0,w-1], rgb[h-1,0], rgb[h-1,w-1]])
+        bg_color = np.median(corners, axis=0)
+        difference = np.max(np.abs(rgb - bg_color), axis=2)
+        background_like = (difference < 39) & (a[:, :, 3] > 0)
+        seen = np.zeros((h,w), dtype=bool)
+        q = deque()
+        for x in range(w):
+            if background_like[0,x]: q.append((0,x))
+            if background_like[h-1,x]: q.append((h-1,x))
         for y in range(h):
-            for x in range(w):
-                if not mask[y, x] or seen[y, x]:
-                    continue
-                q = deque([(y, x)])
-                seen[y, x] = True
-                points = []
-                while q:
-                    yy, xx = q.popleft()
-                    points.append((yy, xx))
-                    for ny, nx in ((yy - 1, xx), (yy + 1, xx), (yy, xx - 1), (yy, xx + 1)):
-                        if 0 <= ny < h and 0 <= nx < w and mask[ny, nx] and not seen[ny, nx]:
-                            seen[ny, nx] = True
-                            q.append((ny, nx))
-                components.append(points)
-        components.sort(key=len, reverse=True)
-        # Preserve components close to the main body (e.g. a raised fist),
-        # but reject disconnected text and neighboring figures.
-        main = components[0]
-        my = np.array([p[0] for p in main])
-        mx = np.array([p[1] for p in main])
-        main_box = (int(mx.min()), int(my.min()), int(mx.max()), int(my.max()))
-        keep = np.zeros_like(mask)
-        for comp in components:
-            ys = [p[0] for p in comp]
-            xs = [p[1] for p in comp]
-            box = (min(xs), min(ys), max(xs), max(ys))
-            near = not (box[0] > main_box[2] + 9 or box[2] < main_box[0] - 9 or box[1] > main_box[3] + 9 or box[3] < main_box[1] - 9)
-            if len(comp) >= 10 and near:
-                for y, x in comp:
-                    keep[y, x] = True
-        a[~keep, 3] = 0
+            if background_like[y,0]: q.append((y,0))
+            if background_like[y,w-1]: q.append((y,w-1))
+        while q:
+            y,x = q.popleft()
+            if seen[y,x] or not background_like[y,x]:
+                continue
+            seen[y,x] = True
+            for ny,nx in ((y-1,x),(y+1,x),(y,x-1),(y,x+1)):
+                if 0<=ny<h and 0<=nx<w and not seen[ny,nx] and background_like[ny,nx]:
+                    q.append((ny,nx))
+        a[seen,3] = 0
         im = Image.fromarray(a)
         bbox = im.getbbox()
         if bbox is None:
@@ -75,4 +67,4 @@ s = s.replace('var scale_factor=1.35', 'var scale_factor=1.65')
 s = s.replace('var width=art.get_width()*scale_factor', 'var width=art.get_width()*scale_factor')
 s = s.replace('draw_texture_rect(art,Rect2(-width/2,-height,width,height),false)', 'draw_texture_rect(art,Rect2(-width/2,-height+13,width,height),false)')
 game.write_text(s)
-print("Ritz sprite transparency, ground alignment and game scale fixed.")
+print("Ritz background-only transparency and complete legs preserved.")
