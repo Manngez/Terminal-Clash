@@ -21,6 +21,28 @@ const COURIER_KICK = preload("res://assets/courier_kick.svg")
 const RIVAL_KICK = preload("res://assets/rival_kick.svg")
 const COURIER_HURT = preload("res://assets/courier_hurt.svg")
 const RIVAL_HURT = preload("res://assets/rival_hurt.svg")
+const PX_COURIER_IDLE = preload("res://assets/pixel_courier_idle.svg")
+const PX_COURIER_HURT = preload("res://assets/pixel_courier_hurt.svg")
+const PX_COURIER_BLOCK = preload("res://assets/pixel_courier_block.svg")
+const PX_COURIER_RUN_0 = preload("res://assets/pixel_courier_run_0.svg")
+const PX_COURIER_RUN_1 = preload("res://assets/pixel_courier_run_1.svg")
+const PX_COURIER_RUN_2 = preload("res://assets/pixel_courier_run_2.svg")
+const PX_COURIER_RUN_3 = preload("res://assets/pixel_courier_run_3.svg")
+const PX_COURIER_PUNCH_0 = preload("res://assets/pixel_courier_punch_0.svg")
+const PX_COURIER_PUNCH_1 = preload("res://assets/pixel_courier_punch_1.svg")
+const PX_COURIER_KICK_0 = preload("res://assets/pixel_courier_kick_0.svg")
+const PX_COURIER_KICK_1 = preload("res://assets/pixel_courier_kick_1.svg")
+const PX_CUSTOMER_IDLE = preload("res://assets/pixel_customer_idle.svg")
+const PX_CUSTOMER_HURT = preload("res://assets/pixel_customer_hurt.svg")
+const PX_CUSTOMER_BLOCK = preload("res://assets/pixel_customer_block.svg")
+const PX_CUSTOMER_RUN_0 = preload("res://assets/pixel_customer_run_0.svg")
+const PX_CUSTOMER_RUN_1 = preload("res://assets/pixel_customer_run_1.svg")
+const PX_CUSTOMER_RUN_2 = preload("res://assets/pixel_customer_run_2.svg")
+const PX_CUSTOMER_RUN_3 = preload("res://assets/pixel_customer_run_3.svg")
+const PX_CUSTOMER_PUNCH_0 = preload("res://assets/pixel_customer_punch_0.svg")
+const PX_CUSTOMER_PUNCH_1 = preload("res://assets/pixel_customer_punch_1.svg")
+const PX_CUSTOMER_KICK_0 = preload("res://assets/pixel_customer_kick_0.svg")
+const PX_CUSTOMER_KICK_1 = preload("res://assets/pixel_customer_kick_1.svg")
 var p = Vector2(255, FLOOR)
 var e = Vector2(705, FLOOR)
 var pv = Vector2.ZERO
@@ -234,52 +256,54 @@ func label(txt,pos,size=24,color=Color.WHITE):
 	draw_string(ThemeDB.fallback_font,pos,txt,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
 
 func fighter(pos,blue,face,attacking,blocking=false):
-	var art = COURIER_ART if blue else CUSTOMER_ART
-	var move_frame = int(game_clock*9.0)%2
-	if blue:
-		if player_hurt_time>0:
-			art = COURIER_HURT
-		elif player_kick_time>0:
-			art = COURIER_KICK
-		elif attacking:
-			art = COURIER_PUNCH
-		elif pos.y < FLOOR-4:
-			art = COURIER_RUN2
-		elif absf(pv.x)>12:
-			art = COURIER_RUN1 if move_frame==0 else COURIER_RUN2
-	else:
-		if enemy_hurt_time>0:
-			art = CUSTOMER_HURT
-		elif enemy_kick_time>0:
-			art = CUSTOMER_KICK
-		elif attacking:
-			art = CUSTOMER_PUNCH
-		elif pos.y < FLOOR-4:
-			art = CUSTOMER_RUN2
-		elif absf(ev.x)>12:
-			art = CUSTOMER_RUN1 if move_frame==0 else CUSTOMER_RUN2
-	var facing_right = face
-	var direction = 1.0 if facing_right else -1.0
 	var moving = absf(pv.x)>12 if blue else absf(ev.x)>12
 	var airborne = pos.y < FLOOR-4
 	var kick = player_kick_time>0 if blue else enemy_kick_time>0
 	var hurt = player_hurt_time>0 if blue else enemy_hurt_time>0
-	var bounce = sin(game_clock*14.0)*3.0 if moving and not airborne else 0.0
-	var lean = -0.15*direction if hurt else 0.12*direction if attacking else 0.0
-	var scale = Vector2(direction*(1.0 if not kick else 1.08),1.0)
-	draw_set_transform(Vector2(pos.x,pos.y+bounce),lean,scale)
-	draw_texture_rect(art,Rect2(-63,-158,126,158),false)
+	var run_frame = int(game_clock*12.0)%4
+	var attack_frame = int(game_clock*15.0)%2
+	var art: Texture2D
+	if blue:
+		if hurt:
+			art = PX_COURIER_HURT
+		elif blocking:
+			art = PX_COURIER_BLOCK
+		elif kick:
+			art = PX_COURIER_KICK_0 if attack_frame==0 else PX_COURIER_KICK_1
+		elif attacking:
+			art = PX_COURIER_PUNCH_0 if attack_frame==0 else PX_COURIER_PUNCH_1
+		elif moving or airborne:
+			match run_frame:
+				0: art = PX_COURIER_RUN_0
+				1: art = PX_COURIER_RUN_1
+				2: art = PX_COURIER_RUN_2
+				_: art = PX_COURIER_RUN_3
+		else:
+			art = PX_COURIER_IDLE
+	else:
+		if hurt:
+			art = PX_CUSTOMER_HURT
+		elif kick:
+			art = PX_CUSTOMER_KICK_0 if attack_frame==0 else PX_CUSTOMER_KICK_1
+		elif attacking:
+			art = PX_CUSTOMER_PUNCH_0 if attack_frame==0 else PX_CUSTOMER_PUNCH_1
+		elif moving or airborne:
+			match run_frame:
+				0: art = PX_CUSTOMER_RUN_0
+				1: art = PX_CUSTOMER_RUN_1
+				2: art = PX_CUSTOMER_RUN_2
+				_: art = PX_CUSTOMER_RUN_3
+		else:
+			art = PX_CUSTOMER_IDLE
+	var direction = 1.0 if face else -1.0
+	draw_set_transform(Vector2(pos.x,pos.y),0.0,Vector2(direction,1.0))
+	draw_texture_rect(art,Rect2(-72,-192,144,192),false)
 	draw_set_transform(Vector2.ZERO)
-	if airborne:
-		draw_arc(Vector2(pos.x,pos.y-73),38,0.4,2.7,12,Color("#d8e9f4",0.35),3)
 	if attacking:
-		var strike_pos = pos+Vector2(direction*(73 if kick else 62),-56 if kick else -91)
-		draw_arc(strike_pos,32 if kick else 24,-1.2,1.2,12,Color("#fff0a4"),5)
-		draw_line(strike_pos+Vector2(0,-19),strike_pos+Vector2(direction*20,-29),Color("#ffffff"),3)
+		var strike_pos = pos+Vector2(direction*(75 if kick else 64),-66 if kick else -102)
+		draw_arc(strike_pos,25,-1.2,1.2,12,Color("#fff0a4"),5)
 	if blocking:
-		draw_arc(Vector2(pos.x+direction*35,pos.y-96),43,-1.1,1.1,16,Color("#8be8ff"),4)
-	if hurt:
-		draw_rect(Rect2(pos.x-38,pos.y-153,76,151),Color(1,0.36,0.25,0.15))
+		draw_arc(Vector2(pos.x+direction*38,pos.y-105),42,-1.1,1.1,16,Color("#8be8ff"),4)
 
 func _draw():
 	draw_texture_rect(TERMINAL_ART,Rect2(0,0,960,540),false)
