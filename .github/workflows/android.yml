@@ -15,7 +15,10 @@ jobs:
             unzip -q -o Paketkriget_Ritz_Godot.zip -d /tmp/paketkriget
             test -f /tmp/paketkriget/Paketkriget_Godot/game.gd
             test -f /tmp/paketkriget/Paketkriget_Godot/assets/ritz.png
-            cp -a /tmp/paketkriget/Paketkriget_Godot/. .
+            cp /tmp/paketkriget/Paketkriget_Godot/game.gd game.gd
+            cp /tmp/paketkriget/Paketkriget_Godot/main.tscn main.tscn
+            cp -a /tmp/paketkriget/Paketkriget_Godot/assets/. assets/
+            # Keep the repository Android export settings and ETC2/ASTC configuration.
             echo "Ritz Edition installed from project archive."
           else
             echo "No Ritz Edition archive found; building existing repository."
