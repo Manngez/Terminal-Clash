@@ -2,7 +2,8 @@ extends Node2D
 
 const W = 960.0
 const FLOOR = 426.0
-const TERMINAL_ART = preload("res://assets/terminal.svg")
+const TERMINAL_ART = preload("res://assets/ritz_stage.svg")
+const CUSTOMER_ART = preload("res://assets/customer.svg")
 const COURIER_ART = preload("res://assets/courier.svg")
 const RIVAL_ART = preload("res://assets/rival.svg")
 const COURIER_RUN1 = preload("res://assets/courier_run1.svg")
@@ -31,7 +32,7 @@ var hit_flash = 0.0
 var state = "title"
 var pressed = {}
 var pointers = {}
-var buttons = {"left":Rect2(25,445,76,76),"right":Rect2(115,445,76,76),"jump":Rect2(210,445,76,76),"punch":Rect2(610,445,76,76),"kick":Rect2(700,445,76,76),"block":Rect2(790,445,76,76),"special":Rect2(880,445,76,76)}
+var buttons = {"left":Rect2(24,443,76,76),"right":Rect2(111,443,76,76),"jump":Rect2(199,443,76,76),"punch":Rect2(614,443,76,76),"kick":Rect2(703,443,76,76),"block":Rect2(792,443,76,76),"special":Rect2(881,443,76,76)}
 var special = 0
 var shots = []
 var ai_clock = 0.0
@@ -209,7 +210,7 @@ func label(txt,pos,size=24,color=Color.WHITE):
 	draw_string(ThemeDB.fallback_font,pos,txt,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
 
 func fighter(pos,blue,face,attacking,blocking=false):
-	var art = COURIER_ART if blue else RIVAL_ART
+	var art = COURIER_ART if blue else CUSTOMER_ART
 	var move_frame = int(game_clock*9.0)%2
 	if blue:
 		if player_hurt_time>0:
@@ -224,13 +225,13 @@ func fighter(pos,blue,face,attacking,blocking=false):
 			art = COURIER_RUN1 if move_frame==0 else COURIER_RUN2
 	else:
 		if enemy_hurt_time>0:
-			art = RIVAL_HURT
+			art = CUSTOMER_ART
 		elif attacking:
-			art = RIVAL_PUNCH
+			art = CUSTOMER_ART
 		elif pos.y < FLOOR-4:
-			art = RIVAL_RUN2
+			art = CUSTOMER_ART
 		elif absf(ev.x)>12:
-			art = RIVAL_RUN1 if move_frame==0 else RIVAL_RUN2
+			art = CUSTOMER_ART
 	var facing_right = face
 	var direction = 1.0 if facing_right else -1.0
 	var moving = absf(pv.x)>12 if blue else absf(ev.x)>12
@@ -265,8 +266,8 @@ func _draw():
 	box(Rect2(30,26,360*maxf(0,hp)/100,23),Color("#e2b944"))
 	box(Rect2(570,26,360,23),Color("#681d31"))
 	box(Rect2(570,26,360*maxf(0,ehp)/100,23),Color("#e2b944"))
-	label("PLAYER 1",Vector2(30,21),19)
-	label("CPU",Vector2(868,21),19)
+	label("POSTNORD",Vector2(30,21),19)
+	label("KUNDEN",Vector2(836,21),19)
 	label(str(ceili(timer)),Vector2(459,50),31)
 	label("ROUNDS "+str(rounds[0])+" : "+str(rounds[1]),Vector2(408,83),18)
 	box(Rect2(30,65,200,12),Color("#222c4a"))
@@ -284,13 +285,13 @@ func _draw():
 		var rect = buttons[key]
 		draw_rect(rect,Color(0.12,0.21,0.35,0.78) if not down(key) else Color(0.4,0.65,0.82,0.92))
 		draw_rect(rect,Color("#b9d9ed"),false,2)
-		label(key.to_upper(),rect.position+Vector2(8,42),15)
+		label({"left":"<","right":">","jump":"UP","punch":"SLAG","kick":"SPARK","block":"SKYDD","special":"SUPER"}.get(key,key),rect.position+Vector2(7,42),15)
 	if hit_flash>0:
 		draw_rect(Rect2(0,0,960,540),Color(1,1,1,0.13))
 	if state != "fight":
 		draw_rect(Rect2(165,135,630,230),Color(0.02,0.04,0.12,0.92))
 		if state == "title":
-			label("TERMINAL CLASH",Vector2(265,225),46,Color("#f3d06a"))
+			label("PAKETKRIGET",Vector2(285,225),46,Color("#f3d06a"))
 			label("TAP TO FIGHT",Vector2(373,292),27)
 		elif state == "round_end":
 			label("ROUND OVER",Vector2(334,225),38,Color("#f3d06a"))
