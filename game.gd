@@ -4,6 +4,11 @@ const W = 960.0
 const FLOOR = 426.0
 const TERMINAL_ART = preload("res://assets/ritz_stage.svg")
 const CUSTOMER_ART = preload("res://assets/customer.svg")
+const CUSTOMER_RUN1 = preload("res://assets/customer_run1.svg")
+const CUSTOMER_RUN2 = preload("res://assets/customer_run2.svg")
+const CUSTOMER_PUNCH = preload("res://assets/customer_punch.svg")
+const CUSTOMER_KICK = preload("res://assets/customer_kick.svg")
+const CUSTOMER_HURT = preload("res://assets/customer_hurt.svg")
 const COURIER_ART = preload("res://assets/courier.svg")
 const RIVAL_ART = preload("res://assets/rival.svg")
 const COURIER_RUN1 = preload("res://assets/courier_run1.svg")
@@ -39,6 +44,11 @@ var ai_clock = 0.0
 var game_clock = 0.0
 var player_kick_time = 0.0
 var enemy_hurt_time = 0.0
+var enemy_kick_time = 0.0
+var combo_hits = 0
+var combo_window = 0.0
+var combo_display = 0.0
+var enemy_windup = 0.0
 var player_hurt_time = 0.0
 var impact_sparks = []
 var camera_shake = 0.0
@@ -63,6 +73,11 @@ func reset_round():
 	special = 0
 	player_kick_time = 0.0
 	enemy_hurt_time = 0.0
+	enemy_kick_time = 0.0
+	combo_hits = 0
+	combo_window = 0.0
+	combo_display = 0.0
+	enemy_windup = 0.0
 	player_hurt_time = 0.0
 	impact_sparks.clear()
 	state = "fight"
@@ -120,6 +135,11 @@ func _process(delta):
 	hit_flash = maxf(0,hit_flash-delta)
 	player_kick_time = maxf(0,player_kick_time-delta)
 	enemy_hurt_time = maxf(0,enemy_hurt_time-delta)
+	enemy_kick_time = maxf(0,enemy_kick_time-delta)
+	combo_display = maxf(0,combo_display-delta)
+	combo_window = maxf(0,combo_window-delta)
+	if combo_window<=0:
+		combo_hits = 0
 	player_hurt_time = maxf(0,player_hurt_time-delta)
 	camera_shake = maxf(0,camera_shake-delta)
 	for spark in impact_sparks:
@@ -160,7 +180,8 @@ func _process(delta):
 			cooldown = 0.65
 	if enemy_cooldown <= 0 and dist < 125 and absf(p.y-e.y)<95:
 		enemy_cooldown = randf_range(0.65,1.25)
-		enemy_attack_time = 0.22
+		enemy_attack_time = 0.28
+		enemy_kick_time = 0.28 if dist > 85 else 0.0
 		if not down("block"):
 			hp -= 7 if dist > 90 else 11
 			hit_flash = 0.13
@@ -197,6 +218,9 @@ func attack(damage,reach,cd,is_kick=false):
 		player_kick_time = cd*0.7
 	if absf(p.x-e.x)<reach and absf(p.y-e.y)<85:
 		ehp -= damage
+		combo_hits = combo_hits+1 if combo_window>0 else 1
+		combo_window = 1.4
+		combo_display = 0.9
 		special = mini(100,special+15)
 		hit_flash = 0.12
 		enemy_hurt_time = 0.22
@@ -225,18 +249,20 @@ func fighter(pos,blue,face,attacking,blocking=false):
 			art = COURIER_RUN1 if move_frame==0 else COURIER_RUN2
 	else:
 		if enemy_hurt_time>0:
-			art = CUSTOMER_ART
+			art = CUSTOMER_HURT
+		elif enemy_kick_time>0:
+			art = CUSTOMER_KICK
 		elif attacking:
-			art = CUSTOMER_ART
+			art = CUSTOMER_PUNCH
 		elif pos.y < FLOOR-4:
-			art = CUSTOMER_ART
+			art = CUSTOMER_RUN2
 		elif absf(ev.x)>12:
-			art = CUSTOMER_ART
+			art = CUSTOMER_RUN1 if move_frame==0 else CUSTOMER_RUN2
 	var facing_right = face
 	var direction = 1.0 if facing_right else -1.0
 	var moving = absf(pv.x)>12 if blue else absf(ev.x)>12
 	var airborne = pos.y < FLOOR-4
-	var kick = blue and player_kick_time>0
+	var kick = player_kick_time>0 if blue else enemy_kick_time>0
 	var hurt = player_hurt_time>0 if blue else enemy_hurt_time>0
 	var bounce = sin(game_clock*14.0)*3.0 if moving and not airborne else 0.0
 	var lean = -0.15*direction if hurt else 0.12*direction if attacking else 0.0
@@ -259,8 +285,7 @@ func _draw():
 	draw_texture_rect(TERMINAL_ART,Rect2(0,0,960,540),false)
 	if camera_shake>0:
 		draw_set_transform(Vector2(randf_range(-3,3),randf_range(-3,3)))
-	for i in range(0,960,80):
-		draw_line(Vector2(i,410),Vector2(i-80,540),Color("#52515b"),2)
+	draw_rect(Rect2(0,397,960,4),Color("#eddbb4",0.32))
 	draw_rect(Rect2(0,0,960,103),Color("#0b1027"))
 	box(Rect2(30,26,360,23),Color("#681d31"))
 	box(Rect2(30,26,360*maxf(0,hp)/100,23),Color("#e2b944"))
@@ -270,6 +295,8 @@ func _draw():
 	label("KUNDEN",Vector2(836,21),19)
 	label(str(ceili(timer)),Vector2(459,50),31)
 	label("ROUNDS "+str(rounds[0])+" : "+str(rounds[1]),Vector2(408,83),18)
+	if combo_display>0 and combo_hits>=2:
+		label(str(combo_hits)+" HIT COMBO!",Vector2(333,144),28,Color("#ffdd69"))
 	box(Rect2(30,65,200,12),Color("#222c4a"))
 	box(Rect2(30,65,special*2,12),Color("#4ccfe0"))
 	fighter(p,true,e.x>p.x,attack_time>0,down("block"))
