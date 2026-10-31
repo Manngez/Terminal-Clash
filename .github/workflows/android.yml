@@ -23,6 +23,7 @@ jobs:
             cp "$ROOT/game.gd" game.gd
             cp "$ROOT/main.tscn" main.tscn
             cp -a "$ROOT/assets/." assets/
+            python3 scripts/upgrade_touch_controls.py game.gd
             # Keep known-good Android export preset and rendering options.
             sed -i 's/window\/handheld\/orientation=1/window\/handheld\/orientation=0/' project.godot
             echo "TERMINAL DELUXE ASSETS INSTALLED."
