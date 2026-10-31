@@ -76,6 +76,7 @@ var impact_sparks = []
 var camera_shake = 0.0
 
 func _ready():
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	set_process(true)
 	set_process_input(true)
 
